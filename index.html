@@ -1,0 +1,49 @@
+<html>
+<head>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+</head>
+<body>
+
+    <div x-data="{ count: 0 }">
+        <button x-on:click="count++">Increment</button>
+        <button x-on:click="count--">Decrement</button>
+        <span x-text="count"></span>
+    </div>
+
+
+    <div x-data="{ open: false }">
+        <button @click="open = !open">Toggle</button>
+        <div x-show="open" x-on:click.outside="open = false">Contents...</div>
+    </div>
+
+
+    <div
+        x-data="{
+            search: '',
+
+            items: ['foo', 'bar', 'baz', 'fuzz'],
+
+            filteredItems() {
+                if (!this.search) {
+                    return
+                }
+                return this.items.filter(
+                    i => i.startsWith(this.search)
+                )
+            }
+        }"
+    >
+        <input x-model="search" placeholder="Search...">
+
+        <ul>
+            <template x-for="item in filteredItems()" :key="item">
+                <li x-text="item"></li>
+            </template>
+        </ul>
+    </div>
+
+
+    <button x-data @click="alert('I\'ve been clicked!')">Click Me</button>
+
+</body>
+</html>
