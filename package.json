@@ -4,11 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "browser-sync start --server --files=index.html,*.js, *.css"
+    "build": "vite build -w",
+    "dev": "vite"
   },
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "alpinejs": "3.14.9"
+  },
   "devDependencies": {
-    "browser-sync": "3.0.4",
+    "vite": "6.3.2"
   }
 }
