@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
 
+import requests
+
 
 def main():
-    data_text = (Path(__file__).parent / "rickandmorty-api.json").read_text()
-    data = json.loads(data_text)
-
+    data = get_schema_json("http://localhost:5000/graphql")
     types = extract_types(data)
     for main_type in ("Query", "Mutation", "Subscription"):
         query_type = types.get(main_type)
@@ -15,8 +15,113 @@ def main():
         parse_fields(query_type["fields"], types, indent=1)
 
 
+def get_schema_json(source):
+    introspection_query_body = {
+        "operationName":"IntrospectionQuery",
+        "query": """
+             query IntrospectionQuery {__schema {
+                queryType { name }
+                mutationType { name }
+                subscriptionType { name }
+                types {
+                  ...FullType
+                }
+                directives {
+                  name
+                  description
+
+                  locations
+                  args(includeDeprecated: true) {
+                    ...InputValue
+                  }
+                }
+              }
+            }
+
+            fragment FullType on __Type {
+              kind
+              name
+              description
+
+              fields(includeDeprecated: true) {
+                name
+                description
+                args(includeDeprecated: true) {
+                  ...InputValue
+                }
+                type {
+                  ...TypeRef
+                }
+                isDeprecated
+                deprecationReason
+              }
+              inputFields(includeDeprecated: true) {
+                ...InputValue
+              }
+              interfaces {
+                ...TypeRef
+              }
+              enumValues(includeDeprecated: true) {
+                name
+                description
+                isDeprecated
+                deprecationReason
+              }
+              possibleTypes {
+                ...TypeRef
+              }
+            }
+
+            fragment InputValue on __InputValue {
+              name
+              description
+              type { ...TypeRef }
+              defaultValue
+              isDeprecated
+              deprecationReason
+            }
+
+            fragment TypeRef on __Type {
+              kind
+              name
+              ofType {
+                kind
+                name
+                ofType {
+                  kind
+                  name
+                  ofType {
+                    kind
+                    name
+                    ofType {
+                      kind
+                      name
+                      ofType {
+                        kind
+                        name
+                        ofType {
+                          kind
+                          name
+                          ofType {
+                            kind
+                            name
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+        """
+    }
+    response = requests.post(source, json=introspection_query_body)
+    print(response.status_code)
+    return response.json()
+
+
 def extract_types(data):
-    return {t["name"]: t for t in data["__schema"]["types"]}
+    return {t["name"]: t for t in data["data"]["__schema"]["types"]}
 
 
 def parse_fields(fields, types, indent=0):
