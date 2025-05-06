@@ -5,9 +5,10 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-class ObjectType(BaseModel):
-    name: str
-    fields: list[Field]
+class Type(BaseModel):
+    scalar_type: ScalarType | None = None
+    list_type: ListType | None = None
+    object_type: ObjectType | None = None
 
 
 class Field(BaseModel):
@@ -15,22 +16,23 @@ class Field(BaseModel):
     type_: Type
 
 
-class Type(BaseModel):
-    kind: Kind
+class ObjectType(BaseModel):
+    name: str
+    fields: list[Field]
     required: bool
 
-    scalar_type: ScalarType | None = None
-    object_type: ObjectType | None = None
-    list_type: Type | None = None
+
+class ScalarType(BaseModel):
+    name: ScalarName
+    required: bool
 
 
-class Kind(Enum):
-    SCALAR = "SCALAR"
-    OBJECT = "OBJECT"
-    LIST = "LIST"
+class ListType(BaseModel):
+    type_: Type
+    required: bool
 
 
-class ScalarType(Enum):
+class ScalarName(Enum):
     BOOLEAN = "BOOLEAN"
     FLOAT = "FLOAT"
     ID = "ID"
@@ -38,43 +40,58 @@ class ScalarType(Enum):
     STRING = "STRING"
 
 
+
+
+
 def main():
     result = ObjectType.model_validate({
         "name": "Query",
+        "required": True,
         "fields": [
             {
                 "name": "username",
                 "type_": {
-                    "kind": "SCALAR",
-                    "required": True,
-                    "scalar_type": "STRING",
+                    "scalar_type": {
+                        "required": True,
+                        "name": "STRING",
+                    },
                 },
             },
             {
                 "name": "friends",
                 "type_": {
-                    "kind": "LIST",
-                    "required": False,
                     "list_type": {
-                        "kind": "OBJECT",
                         "required": True,
-                        "object_type": {
-                            "name": "User",
-                            "fields": [
-                                {
-                                    "name": "username",
-                                    "type_": {
-                                        "kind": "SCALAR",
-                                        "required": True,
-                                        "scalar_type": "STRING",
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        ]
+                        "type_": {
+                            "object_type": {
+                                "required": True,
+                                "name": "User",
+                                "fields": [
+                                    {
+                                        "name": "username",
+                                        "type_": {
+                                            "scalar_type": {
+                                                "name": "STRING",
+                                                "required": True,
+                                            },
+                                        },
+                                    },
+                                    {
+                                        "name": "age",
+                                        "type_": {
+                                            "scalar_type": {
+                                                "name": "INT",
+                                                "required": True,
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+        ],
     })
 
     print(result.model_dump_json())
