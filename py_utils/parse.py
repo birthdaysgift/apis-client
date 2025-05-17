@@ -21,6 +21,12 @@ class Type(BaseModel):
 class Field(BaseModel):
     name: str
     type_: Type
+    args: list[Arg]
+
+
+class Arg(BaseModel):
+    name: str
+    type_: Type
 
 
 class ObjectType(BaseModel):
@@ -50,7 +56,7 @@ class ScalarName(Enum):
 def main():
     data = get_schema_json("http://localhost:5000/graphql")
     types = get_types(data)
-    print(parse_type("Character", types, required=True).model_dump_json())
+    print(parse_type("Query", types, required=True).model_dump_json())
 
 
 def get_schema_json(source):
@@ -73,10 +79,20 @@ def parse_type(type_name, types, *, required):
     fields = []
     for field in types[type_data["name"]]["fields"]:
         field_type = parse_field(field["type"], types, required=False)
+
+        args = []
+        for arg in field["args"]:
+            args.append(
+                Arg(
+                    name=arg["name"],
+                    type_=parse_field(arg["type"], types, required=False)
+                )
+            )
+
         try:
-            fields.append(Field(name=field["name"], type_=field_type))
+            fields.append(Field(name=field["name"], type_=field_type, args=args))
         except Exception as e:
-            print("exc")
+            print('exc')
     return ObjectType(name=type_data["name"], fields=fields, required=required)
 
 
@@ -91,7 +107,7 @@ def parse_field(field_data, types, required):
         list_type = parse_field(field_data["ofType"], types, required=False)
         return Type(list_type=ListType(type_=list_type, required=required))
 
-    if field_data["kind"] == "OBJECT":
+    if field_data["kind"] in ["OBJECT", "INPUT_OBJECT"]:
         return Type(object_name=field_data["name"])
 
     raise AssertionError(f"Unknown field type. field_data: {field_data}")
