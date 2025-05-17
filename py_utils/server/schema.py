@@ -7,15 +7,41 @@ from typing import NewType
 
 @strawberry.type
 class Query:
-    character: Character | None = strawberry.field(description="Get a specific character by ID")
-    characters: Characters | None = strawberry.field(description="Get the list of all characters")
-    characters_by_ids: list[Character | None] | None = strawberry.field(description="Get a list of characters selected by ids")
-    location: Location | None = strawberry.field(description="Get a specific locations by ID")
-    locations: Locations | None = strawberry.field(description="Get the list of all locations")
-    locations_by_ids: list[Location | None] | None = strawberry.field(description="Get a list of locations selected by ids")
-    episode: Episode | None = strawberry.field(description="Get a specific episode by ID")
-    episodes: Episodes | None = strawberry.field(description="Get the list of all episodes")
-    episodes_by_ids: list[Episode | None] | None = strawberry.field(description="Get a list of episodes selected by ids")
+    @strawberry.field(description="Get a specific character by ID")
+    def character(self, id: int) -> Character | None:
+        ...
+
+    @strawberry.field(description="Get the list of all characters")
+    def characters(self, page: int, filter: FilterCharacter) -> Characters | None:
+        ...
+
+    @strawberry.field(description="Get a list of characters selected by ids")
+    def characters_by_ids(self, ids: list[int]) -> list[Character | None] | None:
+        ...
+
+    @strawberry.field(description="Get a specific locations by ID")
+    def location(self, id: int) -> Location | None:
+        ...
+
+    @strawberry.field(description="Get the list of all locations")
+    def locations(self, page: int, filter: FilterLocation) -> Locations | None:
+        ...
+
+    @strawberry.field(description="Get a list of locations selected by ids")
+    def locations_by_ids(self, ids: list[int]) -> list[Location | None] | None:
+        ...
+
+    @strawberry.field(description="Get a specific episode by ID")
+    def episode(self, id: int) -> Episode | None:
+        ...
+
+    @strawberry.field(description="Get the list of all episodes")
+    def episodes(self, page: int, filter: FilterEpisode) -> Episodes | None:
+        ...
+
+    @strawberry.field(description="Get a list of episodes selected by ids")
+    def episodes_by_ids(self, ids: list[int]) -> list[Episode | None] | None:
+        ...
 
 
 @strawberry.type(description="")
