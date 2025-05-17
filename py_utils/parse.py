@@ -15,7 +15,7 @@ from graphql import get_introspection_query
 class Type(BaseModel):
     scalar_type: ScalarType | None = None
     list_type: ListType | None = None
-    object_type: ObjectType | None = None
+    object_name: str | None = None
 
 
 class Field(BaseModel):
@@ -49,8 +49,8 @@ class ScalarName(Enum):
 
 def main():
     data = get_schema_json("http://localhost:5000/graphql")
-    parse_schema_json(data).model_dump_json()
-
+    types = get_types(data)
+    print(parse_type("Character", types, required=True).model_dump_json())
 
 
 def get_schema_json(source):
@@ -64,8 +64,12 @@ def get_schema_json(source):
     return response.json()
 
 
+def get_types(data):
+    return {t["name"]: t for t in data["data"]["__schema"]["types"]}
+
+
 def parse_schema_json(data):
-    types = {t["name"]: t for t in data["data"]["__schema"]["types"]}
+    types = get_types(data)
 
     for main_type in ("Query", "Mutation", "Introspection"):
         type_data = types[main_type]
@@ -77,24 +81,33 @@ def parse_schema_json(data):
 
 
 
-def parse_type(type_data, types, *, required):
-
-    if type_data["kind"] == "SCALAR":
-        return Type(scalar_type=ScalarType(name=type_data["name"], required=required))
-
-    if type_data["kind"] == "NON_NULL":
-        return parse_type(type_data["ofType"], types, required=True)
-
-    if type_data["kind"] == "OBJECT":
-        fields = []
-        for field in types[type_data["name"]]["fields"]:
-            field_type = parse_type(field["type"], types, required=False)
+def parse_type(type_name, types, *, required):
+    type_data = types[type_name]
+    fields = []
+    for field in types[type_data["name"]]["fields"]:
+        field_type = parse_field(field["type"], types, required=False)
+        try:
             fields.append(Field(name=field["name"], type_=field_type))
-        return Type(object_type=ObjectType(name=type_data["name"], fields=fields, required=required))
+        except Exception as e:
+            print("exc")
+    return ObjectType(name=type_data["name"], fields=fields, required=required)
 
-    if type_data["kind"] == "LIST":
-        list_type = parse_type(type_data["ofType"], types, required=False)
-        return Type(ListType(type_=list_type, required=required))
+
+def parse_field(field_data, types, required):
+    if field_data["kind"] == "SCALAR":
+        return Type(scalar_type=ScalarType(name=field_data["name"], required=required))
+
+    if field_data["kind"] == "NON_NULL":
+        return parse_field(field_data["ofType"], types, required=True)
+
+    if field_data["kind"] == "LIST":
+        list_type = parse_field(field_data["ofType"], types, required=False)
+        return Type(list_type=ListType(type_=list_type, required=required))
+
+    if field_data["kind"] == "OBJECT":
+        return Type(object_name=field_data["name"])
+
+    raise AssertionError(f"Unknown field type. field_data: {field_data}")
 
 
 if __name__ == "__main__":
