@@ -68,19 +68,6 @@ def get_types(data):
     return {t["name"]: t for t in data["data"]["__schema"]["types"]}
 
 
-def parse_schema_json(data):
-    types = get_types(data)
-
-    for main_type in ("Query", "Mutation", "Introspection"):
-        type_data = types[main_type]
-        if type_data is None:
-            continue
-
-        # TODO: now it parses only "Query" but should parse all main types
-        return parse_type(type_data, types, required=False)
-
-
-
 def parse_type(type_name, types, *, required):
     type_data = types[type_name]
     fields = []
