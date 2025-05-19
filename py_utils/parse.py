@@ -14,24 +14,21 @@ from graphql import get_introspection_query
 class Object(BaseModel):
     name: str
     fields: list[Field]
-    required: bool  # TODO: do we need it ? seems yes, because object can be as a part of a field
 
 
 class Field(BaseModel):
     name: str
-    type_: Type
-    args: list[Arg]
-
-
-class Type(BaseModel):
     scalar_type: ScalarType | None = None
     list_type: ListType | None = None
     object_type: ObjectType | None = None
+    args: list[Arg]
 
 
 class Arg(BaseModel):
     name: str
-    type_: Type
+    scalar_type: ScalarType | None = None
+    list_type: ListType | None = None
+    object_type: ObjectType | None = None
 
 
 class ObjectType(BaseModel):
@@ -45,7 +42,9 @@ class ScalarType(BaseModel):
 
 
 class ListType(BaseModel):
-    type_: Type
+    scalar_type: ScalarType | None = None
+    list_type: ListType | None = None
+    object_type: ObjectType | None = None
     required: bool
 
 
@@ -60,7 +59,7 @@ class ScalarName(Enum):
 def main():
     data = get_schema_json("http://localhost:5000/graphql")
     objects = get_objects(data)
-    print(parse_object("Query", objects, required=True).model_dump_json())
+    print(parse_object("Query", objects, required=True).model_dump_json(exclude_unset=True))
 
 
 def get_schema_json(source):
@@ -82,37 +81,57 @@ def parse_object(type_name, types, *, required):
     type_data = types[type_name]
     fields = []
     for field in types[type_data["name"]]["fields"]:
-        field_type = parse_field(field["type"], types, required=False)
-
         args = []
         for arg in field["args"]:
-            args.append(
-                Arg(
-                    name=arg["name"],
-                    type_=parse_field(arg["type"], types, required=False)
-                )
-            )
+            arg_type = parse_field(arg["type"], types, required=False)
+            if isinstance(arg_type, ScalarType):
+                args.append(Arg(name=arg["name"], scalar_type=arg_type))
+                continue
+            if isinstance(arg_type, ListType):
+                args.append(Arg(name=arg["name"], list_type=arg_type))
+                continue
+            if isinstance(arg_type, ObjectType):
+                args.append(Arg(name=arg["name"], object_type=arg_type))
+                continue
+            raise AssertionError(f"Unknown arg type: {type(arg_type)}, {arg_type}")
 
-        try:
-            fields.append(Field(name=field["name"], type_=field_type, args=args))
-        except Exception as e:
-            print('exc')
-    return Object(name=type_data["name"], fields=fields, required=required)
+        field_type = parse_field(field["type"], types, required=False)
+
+        if isinstance(field_type, ScalarType):
+            fields.append(Field(name=field["name"], scalar_type=field_type, args=args))
+            continue
+        if isinstance(field_type, ListType):
+            fields.append(Field(name=field["name"], list_type=field_type, args=args))
+            continue
+        if isinstance(field_type, ObjectType):
+            fields.append(Field(name=field["name"], object_type=field_type, args=args))
+            continue
+
+        raise AssertionError(f"Unknown field type: {type(field_type)}, {field_type}")
+
+
+    return Object(name=type_data["name"], fields=fields)
 
 
 def parse_field(field_data, types, required):
     if field_data["kind"] == "SCALAR":
-        return Type(scalar_type=ScalarType(name=field_data["name"], required=required))
+        return ScalarType(name=field_data["name"], required=required)
 
     if field_data["kind"] == "NON_NULL":
         return parse_field(field_data["ofType"], types, required=True)
 
     if field_data["kind"] == "LIST":
         list_type = parse_field(field_data["ofType"], types, required=False)
-        return Type(list_type=ListType(type_=list_type, required=required))
+        if isinstance(list_type, ScalarType):
+            return ListType(scalar_type=list_type, required=required)
+        if isinstance(list_type, ListType):
+            return ListType(list_type=list_type, required=required)
+        if isinstance(list_type, ObjectType):
+            return ListType(object_type=list_type, required=required)
+        raise AssertionError(f"Unknown field type: {type(list_type)}, {list_type}")
 
     if field_data["kind"] in ["OBJECT", "INPUT_OBJECT"]:
-        return Type(object_type=ObjectType(name=field_data["name"], required=required))
+        return ObjectType(name=field_data["name"], required=required)
 
     raise AssertionError(f"Unknown field type. field_data: {field_data}")
 
