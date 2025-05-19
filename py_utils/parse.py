@@ -13,19 +13,17 @@ from graphql import get_introspection_query
 
 class Object(BaseModel):
     name: str
-    fields: list[Field]
+    fields: dict[str, Field]
 
 
 class Field(BaseModel):
-    name: str
     scalar_type: ScalarType | None = None
     list_type: ListType | None = None
     object_type: ObjectType | None = None
-    args: list[Arg]
+    args: dict[str, Arg]
 
 
 class Arg(BaseModel):
-    name: str
     scalar_type: ScalarType | None = None
     list_type: ListType | None = None
     object_type: ObjectType | None = None
@@ -42,10 +40,10 @@ class ScalarType(BaseModel):
 
 
 class ListType(BaseModel):
+    required: bool
     scalar_type: ScalarType | None = None
     list_type: ListType | None = None
     object_type: ObjectType | None = None
-    required: bool
 
 
 class ScalarName(Enum):
@@ -68,7 +66,6 @@ def get_schema_json(source):
         "query": get_introspection_query(),
     }
     response = requests.post(source, json=introspection_query_body)
-    print(response.status_code)
     (Path(__file__).parent / "api.json").write_text(json.dumps(response.json(), indent=4))
     return response.json()
 
@@ -79,32 +76,32 @@ def get_objects(data):
 
 def parse_object(type_name, types, *, required):
     type_data = types[type_name]
-    fields = []
+    fields = {}
     for field in types[type_data["name"]]["fields"]:
-        args = []
+        args = {}
         for arg in field["args"]:
             arg_type = parse_field(arg["type"], types, required=False)
             if isinstance(arg_type, ScalarType):
-                args.append(Arg(name=arg["name"], scalar_type=arg_type))
+                args[arg["name"]] = Arg(scalar_type=arg_type)
                 continue
             if isinstance(arg_type, ListType):
-                args.append(Arg(name=arg["name"], list_type=arg_type))
+                args[arg["name"]] = Arg(list_type=arg_type)
                 continue
             if isinstance(arg_type, ObjectType):
-                args.append(Arg(name=arg["name"], object_type=arg_type))
+                args[arg["name"]] = Arg(object_type=arg_type)
                 continue
             raise AssertionError(f"Unknown arg type: {type(arg_type)}, {arg_type}")
 
         field_type = parse_field(field["type"], types, required=False)
 
         if isinstance(field_type, ScalarType):
-            fields.append(Field(name=field["name"], scalar_type=field_type, args=args))
+            fields[field["name"]] = Field(scalar_type=field_type, args=args)
             continue
         if isinstance(field_type, ListType):
-            fields.append(Field(name=field["name"], list_type=field_type, args=args))
+            fields[field["name"]] = Field(list_type=field_type, args=args)
             continue
         if isinstance(field_type, ObjectType):
-            fields.append(Field(name=field["name"], object_type=field_type, args=args))
+            fields[field["name"]] = Field(object_type=field_type, args=args)
             continue
 
         raise AssertionError(f"Unknown field type: {type(field_type)}, {field_type}")
