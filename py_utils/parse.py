@@ -10,18 +10,23 @@ from pathlib import Path
 import requests
 from graphql import get_introspection_query
 
-# from py_utils.sdl_schema import ScalarType, ObjectType, ListType, Field
 
-class Type(BaseModel):
-    scalar_type: ScalarType | None = None
-    list_type: ListType | None = None
-    object_name: str | None = None
+class Object(BaseModel):
+    name: str
+    fields: list[Field]
+    required: bool  # TODO: do we need it ? seems yes, because object can be as a part of a field
 
 
 class Field(BaseModel):
     name: str
     type_: Type
     args: list[Arg]
+
+
+class Type(BaseModel):
+    scalar_type: ScalarType | None = None
+    list_type: ListType | None = None
+    object_type: ObjectType | None = None
 
 
 class Arg(BaseModel):
@@ -31,7 +36,6 @@ class Arg(BaseModel):
 
 class ObjectType(BaseModel):
     name: str
-    fields: list[Field]
     required: bool
 
 
@@ -55,8 +59,8 @@ class ScalarName(Enum):
 
 def main():
     data = get_schema_json("http://localhost:5000/graphql")
-    types = get_types(data)
-    print(parse_type("Query", types, required=True).model_dump_json())
+    objects = get_objects(data)
+    print(parse_object("Query", objects, required=True).model_dump_json())
 
 
 def get_schema_json(source):
@@ -70,11 +74,11 @@ def get_schema_json(source):
     return response.json()
 
 
-def get_types(data):
+def get_objects(data):
     return {t["name"]: t for t in data["data"]["__schema"]["types"]}
 
 
-def parse_type(type_name, types, *, required):
+def parse_object(type_name, types, *, required):
     type_data = types[type_name]
     fields = []
     for field in types[type_data["name"]]["fields"]:
@@ -93,7 +97,7 @@ def parse_type(type_name, types, *, required):
             fields.append(Field(name=field["name"], type_=field_type, args=args))
         except Exception as e:
             print('exc')
-    return ObjectType(name=type_data["name"], fields=fields, required=required)
+    return Object(name=type_data["name"], fields=fields, required=required)
 
 
 def parse_field(field_data, types, required):
@@ -108,7 +112,7 @@ def parse_field(field_data, types, required):
         return Type(list_type=ListType(type_=list_type, required=required))
 
     if field_data["kind"] in ["OBJECT", "INPUT_OBJECT"]:
-        return Type(object_name=field_data["name"])
+        return Type(object_type=ObjectType(name=field_data["name"], required=required))
 
     raise AssertionError(f"Unknown field type. field_data: {field_data}")
 
