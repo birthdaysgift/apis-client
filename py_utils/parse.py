@@ -13,18 +13,21 @@ from graphql import get_introspection_query
 
 class Object(BaseModel):
     name: str
+    description: str | None = None
     fields: dict[str, Field]
 
 
 class Field(BaseModel):
+    description: str | None = None
+    args: dict[str, Arg]
     scalar_type: ScalarType | None = None
     list_type: ListType | None = None
     object_type: ObjectType | None = None
     enum_type: EnumType | None = None
-    args: dict[str, Arg]
 
 
 class Arg(BaseModel):
+    description: str | None = None
     scalar_type: ScalarType | None = None
     list_type: ListType | None = None
     object_type: ObjectType | None = None
@@ -91,38 +94,38 @@ def parse_object(type_name, types, *, required):
         for arg in field["args"]:
             arg_type = parse_field(arg["type"], types, required=False)
             if isinstance(arg_type, ScalarType):
-                args[arg["name"]] = Arg(scalar_type=arg_type)
+                args[arg["name"]] = Arg(scalar_type=arg_type, description=arg["description"])
                 continue
             if isinstance(arg_type, ListType):
-                args[arg["name"]] = Arg(list_type=arg_type)
+                args[arg["name"]] = Arg(list_type=arg_type, description=arg["description"])
                 continue
             if isinstance(arg_type, ObjectType):
-                args[arg["name"]] = Arg(object_type=arg_type)
+                args[arg["name"]] = Arg(object_type=arg_type, description=arg["description"])
                 continue
             if isinstance(arg_type, EnumType):
-                args[arg["name"]] = Arg(enum_type=arg_type)
+                args[arg["name"]] = Arg(enum_type=arg_type, description=arg["description"])
                 continue
             raise AssertionError(f"Unknown arg type: {type(arg_type)}, {arg_type}")
 
         field_type = parse_field(field["type"], types, required=False)
 
         if isinstance(field_type, ScalarType):
-            fields[field["name"]] = Field(scalar_type=field_type, args=args)
+            fields[field["name"]] = Field(scalar_type=field_type, args=args, description=field["description"])
             continue
         if isinstance(field_type, ListType):
-            fields[field["name"]] = Field(list_type=field_type, args=args)
+            fields[field["name"]] = Field(list_type=field_type, args=args, description=field["description"])
             continue
         if isinstance(field_type, ObjectType):
-            fields[field["name"]] = Field(object_type=field_type, args=args)
+            fields[field["name"]] = Field(object_type=field_type, args=args, description=field["description"])
             continue
         if isinstance(field_type, EnumType):
-            fields[field["name"]] = Field(enum_type=field_type, args=args)
+            fields[field["name"]] = Field(enum_type=field_type, args=args, description=field["description"])
             continue
 
         raise AssertionError(f"Unknown field type: {type(field_type)}, {field_type}")
 
 
-    return Object(name=type_data["name"], fields=fields)
+    return Object(name=type_data["name"], fields=fields, description=type_data["description"])
 
 
 def parse_field(field_data, types, required):
@@ -160,4 +163,4 @@ def parse_field(field_data, types, required):
 if __name__ == "__main__":
     main()
 
-# TODO: add descriptions
+# TODO: add deprecations parsing
