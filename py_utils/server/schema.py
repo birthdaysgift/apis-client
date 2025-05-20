@@ -7,48 +7,52 @@ from typing import NewType
 
 @strawberry.type
 class Query:
-    @strawberry.field(description="Get a specific character by ID")
-    def character(self, id: int) -> Character | None:
+    # @strawberry.field(description="Get a specific character by ID")
+    # def character(self, id: int) -> Character | None:
+    #     ...
+
+    @strawberry.field(description="Get all characters with selected status (TECH: to test enums in args)")
+    def characters_by_status(self, status: Status) -> Characters | None:
         ...
 
-    @strawberry.field(description="Get the list of all characters")
-    def characters(self, page: int, filter: FilterCharacter) -> Characters | None:
-        ...
+    # @strawberry.field(description="Get the list of all characters")
+    # def characters(self, page: int, filter: FilterCharacter) -> Characters | None:
+    #     ...
 
-    @strawberry.field(description="Get a list of characters selected by ids")
-    def characters_by_ids(self, ids: list[int]) -> list[Character | None] | None:
-        ...
+    # @strawberry.field(description="Get a list of characters selected by ids")
+    # def characters_by_ids(self, ids: list[int]) -> list[Character | None] | None:
+    #     ...
 
-    @strawberry.field(description="Get a specific locations by ID")
-    def location(self, id: int) -> Location | None:
-        ...
+    # @strawberry.field(description="Get a specific locations by ID")
+    # def location(self, id: int) -> Location | None:
+    #     ...
 
-    @strawberry.field(description="Get the list of all locations")
-    def locations(self, page: int, filter: FilterLocation) -> Locations | None:
-        ...
+    # @strawberry.field(description="Get the list of all locations")
+    # def locations(self, page: int, filter: FilterLocation) -> Locations | None:
+    #     ...
 
-    @strawberry.field(description="Get a list of locations selected by ids")
-    def locations_by_ids(self, ids: list[int]) -> list[Location | None] | None:
-        ...
+    # @strawberry.field(description="Get a list of locations selected by ids")
+    # def locations_by_ids(self, ids: list[int]) -> list[Location | None] | None:
+    #     ...
 
-    @strawberry.field(description="Get a specific episode by ID")
-    def episode(self, id: int) -> Episode | None:
-        ...
+    # @strawberry.field(description="Get a specific episode by ID")
+    # def episode(self, id: int) -> Episode | None:
+    #     ...
 
-    @strawberry.field(description="Get the list of all episodes")
-    def episodes(self, page: int, filter: FilterEpisode) -> Episodes | None:
-        ...
+    # @strawberry.field(description="Get the list of all episodes")
+    # def episodes(self, page: int, filter: FilterEpisode) -> Episodes | None:
+    #     ...
 
-    @strawberry.field(description="Get a list of episodes selected by ids")
-    def episodes_by_ids(self, ids: list[int]) -> list[Episode | None] | None:
-        ...
+    # @strawberry.field(description="Get a list of episodes selected by ids")
+    # def episodes_by_ids(self, ids: list[int]) -> list[Episode | None] | None:
+    #     ...
 
 
 @strawberry.type(description="")
 class Character:
     id: strawberry.ID | None = strawberry.field(description="The id of the character.")
     name: str | None = strawberry.field(description="The name of the character.")
-    status: str | None = strawberry.field(description="The status of the character ('Alive', 'Dead' or 'unknown').")
+    status: Status | None = strawberry.field(description="The status of the character ('Alive', 'Dead' or 'unknown').")
     species: str | None = strawberry.field(description="The species of the character.")
     type: str | None = strawberry.field(description="The type or subspecies of the character.")
     gender: str | None = strawberry.field(description="The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').")
@@ -60,6 +64,13 @@ All images are 300x300px and most are medium shots or portraits since they are i
 """)
     episode: list[Episode | None] = strawberry.field(description="Episodes in which this character appeared.")
     created: str | None = strawberry.field(description="Time at which the character was created in the database.")
+
+
+@strawberry.enum
+class Status(Enum):
+    alive = "Alive"
+    dead = "Dead"
+    unknown = "unknown"
 
 
 @strawberry.type(description="")
@@ -85,7 +96,7 @@ class Episode:
 @strawberry.input(description="")
 class FilterCharacter:
     name: str | None
-    status: str | None
+    status: Status | None
     species: str | None
     type: str | None
     gender: str | None

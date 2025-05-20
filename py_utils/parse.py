@@ -20,6 +20,7 @@ class Field(BaseModel):
     scalar_type: ScalarType | None = None
     list_type: ListType | None = None
     object_type: ObjectType | None = None
+    enum_type: EnumType | None = None
     args: dict[str, Arg]
 
 
@@ -27,6 +28,7 @@ class Arg(BaseModel):
     scalar_type: ScalarType | None = None
     list_type: ListType | None = None
     object_type: ObjectType | None = None
+    enum_type: EnumType | None = None
 
 
 class ObjectType(BaseModel):
@@ -44,6 +46,13 @@ class ListType(BaseModel):
     scalar_type: ScalarType | None = None
     list_type: ListType | None = None
     object_type: ObjectType | None = None
+    enum_type: EnumType | None = None
+
+
+class EnumType(BaseModel):
+    name: str
+    required: bool
+    values: list[str]
 
 
 class ScalarName(Enum):
@@ -90,6 +99,9 @@ def parse_object(type_name, types, *, required):
             if isinstance(arg_type, ObjectType):
                 args[arg["name"]] = Arg(object_type=arg_type)
                 continue
+            if isinstance(arg_type, EnumType):
+                args[arg["name"]] = Arg(enum_type=arg_type)
+                continue
             raise AssertionError(f"Unknown arg type: {type(arg_type)}, {arg_type}")
 
         field_type = parse_field(field["type"], types, required=False)
@@ -102,6 +114,9 @@ def parse_object(type_name, types, *, required):
             continue
         if isinstance(field_type, ObjectType):
             fields[field["name"]] = Field(object_type=field_type, args=args)
+            continue
+        if isinstance(field_type, EnumType):
+            fields[field["name"]] = Field(enum_type=field_type, args=args)
             continue
 
         raise AssertionError(f"Unknown field type: {type(field_type)}, {field_type}")
@@ -130,9 +145,19 @@ def parse_field(field_data, types, required):
     if field_data["kind"] in ["OBJECT", "INPUT_OBJECT"]:
         return ObjectType(name=field_data["name"], required=required)
 
+    if field_data["kind"] == "ENUM":
+        return EnumType(
+            name=field_data["name"],
+            required=required,
+            values=[
+                enum_value["name"] for enum_value in types[field_data["name"]]["enumValues"]
+            ],
+        )
+
     raise AssertionError(f"Unknown field type. field_data: {field_data}")
 
 
 if __name__ == "__main__":
     main()
 
+# TODO: add descriptions
