@@ -1,0 +1,13 @@
+.colors-page {
+  height: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+#color-boxes-showcase {
+  display: inline-flex;
+  flex-direction: row;
+  gap: 10px;
+}

@@ -1,0 +1,17 @@
+.color-box {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.color {
+  width: 150px;
+  height: 150px;
+}
+
+.hint {
+  text-align: center;
+  font-size: 12px;
+  font-family: monospace;
+  color: grey;
+}

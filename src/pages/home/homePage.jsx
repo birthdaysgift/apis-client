@@ -8,7 +8,7 @@ const HomePage = () => (
     </p>
     <ul>
       <li><a href="/colors">Colors</a></li>
-      <li><a href="/components">Colmponents</a></li>
+      <li><a href="/components">Components</a></li>
       <li><a href="/fonts">Fonts</a></li>
       <li><a href="/layouts">Layouts</a></li>
     </ul>

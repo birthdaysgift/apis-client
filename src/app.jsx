@@ -9,7 +9,7 @@ import LayoutsPage from './pages/layouts/layoutsPage';
 
 export function App() {
   return (
-    <div>
+    <div style="height: 100%">
       <Router>
         <HomePage path="/" />
         <ColorsPage path="/colors" />

@@ -1,0 +1,14 @@
+.bg-primary {
+  background-color: #101218;
+}
+
+.text-color-primary {
+  color: #ffffff;
+}
+
+:root {
+  --green-color: green;
+  --blue-color: blue;
+  --red-color: red;
+  --bg-primary: #101218;
+}
