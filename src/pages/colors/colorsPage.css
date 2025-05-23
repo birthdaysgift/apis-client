@@ -1,13 +1,16 @@
 .colors-page {
-  height: 100%;
+  background-color: var(--black1);
+  color: var(--white2);
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-#color-boxes-showcase {
+.color-boxes-showcase {
+  width: 100%;
   display: inline-flex;
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 10px;
 }
