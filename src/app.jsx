@@ -6,10 +6,12 @@ import ColorsPage from './pages/colors/colorsPage';
 import FontsPage from './pages/fonts/fontsPage';
 import LayoutsPage from './pages/layouts/layoutsPage';
 
+import styles from "./app.module.css"
+
 
 export function App() {
   return (
-    <div style="height: 100%">
+    <div class={styles["app"]}>
       <Router>
         <HomePage path="/" />
         <ColorsPage path="/colors" />
