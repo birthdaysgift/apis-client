@@ -1,8 +1,8 @@
-import ColorBox from 'src/pages/colors/components/colorBox';
+import ColorBox from 'src/pages/colors/components/ColorBox';
 
 import 'src/styles/shared/colors.css';
 
-import styles from 'src/pages/colors/colorsPage.module.css'
+import styles from 'src/pages/colors/ColorsPage.module.css'
 
 
 const ColorsPage = () => (

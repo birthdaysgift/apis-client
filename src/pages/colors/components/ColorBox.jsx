@@ -1,4 +1,4 @@
-import styles from 'src/pages/colors/components/colorBox.module.css';
+import styles from 'src/pages/colors/components/ColorBox.module.css';
 
 const ColorBox = (props) => {
   const color = `--${props.colorVariable}`
