@@ -1,12 +1,12 @@
 import Router from 'preact-router';
 
-import HomePage from './pages/home/homePage';
-import ComponentsPage from './pages/components/componentsPage';
-import ColorsPage from './pages/colors/colorsPage';
-import FontsPage from './pages/fonts/fontsPage';
-import LayoutsPage from './pages/layouts/layoutsPage';
+import HomePage from 'src/pages/home/homePage';
+import ComponentsPage from 'src/pages/components/componentsPage';
+import ColorsPage from 'src/pages/colors/colorsPage';
+import FontsPage from 'src/pages/fonts/fontsPage';
+import LayoutsPage from 'src/pages/layouts/layoutsPage';
 
-import styles from "./app.module.css"
+import styles from "src/app.module.css"
 
 
 export function App() {
